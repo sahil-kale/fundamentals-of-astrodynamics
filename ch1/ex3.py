@@ -3,20 +3,26 @@ from common.constants import MU_EARTH
 from pint import UnitRegistry
 ureg = UnitRegistry()
 
-e  = 0.1
+e = 0.1
 perigee_alt = 200 * ureg.nautical_mile
 
-# Determine apogee (r_a), Specific Mechanical Energy (E), Specific Angular Momentum (h)
-a = perigee_alt.to(ureg.feet) / (1-e)
-p = perigee_alt.to(ureg.feet) * (1+e)
+R_EARTH = 3443.9 * ureg.nautical_mile  # Earth's mean radius
+r_p = (R_EARTH + perigee_alt).to(ureg.nautical_mile)
+p = r_p * (1 + e)
+r_a = p / (1 - e)
+apogee_alt = r_a - R_EARTH
 
-apogee_alt = p / (1-e)
+a = (r_a + r_p) / 2
 
 mu = MU_EARTH.to("foot**3 / second**2").magnitude
-specific_mechanical_energy = -mu/(2 * a)
-specific_angular_momentum = np.sqrt(p * mu)
 
-# Print results (print apogee in nautical miles)
-print(f"Apogee altitude: {apogee_alt.to(ureg.nautical_mile).magnitude} nautical miles")
-print(f"Specific Mechanical Energy: {specific_mechanical_energy:.4e} ft^2/s^2")
-print(f"Specific Angular Momentum: {specific_angular_momentum:.4e} ft^2/s")
+p_ft = p.to(ureg.feet).magnitude
+a_ft = a.to(ureg.feet).magnitude
+
+specific_mechanical_energy = -mu / (2 * a_ft)
+specific_angular_momentum = np.sqrt(p_ft * mu)
+
+print(f"r_p: {r_p:.1f}")                        # Should be ~3643.9 n.mi
+print(f"Apogee altitude: {apogee_alt.to(ureg.nautical_mile):.1f}")  # Should be ~1009.8 n.mi
+print(f"Specific Mechanical Energy: {specific_mechanical_energy:.3e} ft^2/s^2")  # ~-2.861e8
+print(f"Specific Angular Momentum: {specific_angular_momentum:.3e} ft^2/s")     # ~5.855e11
