@@ -91,7 +91,43 @@ def calc_orbit_params(epsilon: float, h: float) -> OrbitParams:
         r_p = p / (1 + e)
         r_a = p / (1 − e)              (elliptic only)
     """
-    raise NotImplementedError("TODO: implement calc_orbit_params")
+    p = h**2 / MU  # semi-latus rectum — valid for all conic sections
+
+    EPS_TOL = 1e-6
+    if abs(epsilon) < EPS_TOL:           # ── parabolic ──────────────────────
+        e = 1.0
+        a = None
+        period = None
+        r_a = None
+        orbit_type = "Parabola"
+
+    elif epsilon < 0:                    # ── elliptic / circular ────────────
+        e = float(np.sqrt(max(0.0, 1.0 + (2.0 * epsilon * h**2) / MU**2)))
+        a = -MU / (2.0 * epsilon)
+        period = 2.0 * np.pi * np.sqrt(a**3 / MU)
+        r_a = p / (1.0 - e)
+        orbit_type = "Circle" if e < 1e-4 else "Ellipse"
+
+    else:                                # ── hyperbolic ─────────────────────
+        e = float(np.sqrt(1.0 + (2.0 * epsilon * h**2) / MU**2))
+        a = -MU / (2.0 * epsilon)        # negative by convention for hyperbola
+        period = None
+        r_a = None
+        orbit_type = "Hyperbola"
+
+    r_p = p / (1.0 + e)
+
+    return OrbitParams(
+        epsilon=epsilon,
+        h=h,
+        e=e,
+        p=p,
+        orbit_type=orbit_type,
+        a=a,
+        period=period,
+        r_periapsis=r_p,
+        r_apoapsis=r_a,
+    )
 
 
 # ── Trajectory geometry ───────────────────────────────────────────────────────
